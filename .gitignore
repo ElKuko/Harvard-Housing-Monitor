@@ -1,0 +1,23 @@
+# Environment
+.env
+
+# Database
+data/
+
+# Logs
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+
+# Playwright
+.playwright/
+
+# OS
+.DS_Store
