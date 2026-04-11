@@ -30,11 +30,14 @@ SEL_EMAIL_INPUT = (
     "input[type='text']"          # broadest fallback
 )
 SEL_PASSWORD_INPUT = "input[type='password']"
-SEL_NEXT_BUTTON    = (
+# After entering email, the portal shows a "Continue" button (not "Next")
+SEL_AFTER_EMAIL_BUTTON = (
+    "input[type='submit'][value*='Continue' i], "
+    "input[type='button'][value*='Continue' i], "
     "input[type='submit'][value*='Next' i], "
-    "input[type='button'][value*='Next' i], "
+    "button:has-text('Continue'), "
     "button:has-text('Next'), "
-    "a:has-text('Next')"
+    "a:has-text('Continue')"
 )
 SEL_LOGIN_BUTTON   = (
     "input[type='submit'][value*='Login' i], "
@@ -44,6 +47,7 @@ SEL_LOGIN_BUTTON   = (
     "button:has-text('Sign In'), "
     "button:has-text('Log In')"
 )
+# Post-login interstitial "Continue" (appears after password step)
 SEL_CONTINUE_BUTTON = (
     "input[type='submit'][value*='Continue' i], "
     "input[type='button'][value*='Continue' i], "
@@ -141,14 +145,14 @@ def _fill_email(page: Page) -> None:
     email_input.fill(HH_EMAIL)
     logger.debug("Email/username entered")
 
-    # Click Next if present
-    next_btn = page.locator(SEL_NEXT_BUTTON)
-    if next_btn.count() > 0 and next_btn.first.is_visible():
-        next_btn.first.click()
-        logger.debug("Clicked Next")
+    # Click the Continue/Next button to advance to the password step
+    after_email_btn = page.locator(SEL_AFTER_EMAIL_BUTTON)
+    if after_email_btn.count() > 0 and after_email_btn.first.is_visible():
+        after_email_btn.first.click()
+        logger.debug("Clicked Continue after email")
         page.wait_for_load_state("networkidle", timeout=BROWSER_TIMEOUT_MS)
     else:
-        logger.debug("No 'Next' button – assuming single-page form")
+        logger.debug("No Continue/Next button after email – assuming single-page form")
 
 
 def _fill_password(page: Page) -> None:
