@@ -11,6 +11,7 @@ import sys
 import uuid
 from datetime import date, datetime
 
+from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 import config
@@ -22,6 +23,9 @@ from src.processing.normalizer import normalise
 from src.processing.diff import compute_new_units
 from src.processing.distance import compute_distance
 from src.notifier.email_sender import send_daily_email
+
+Path("logs").mkdir(exist_ok=True)
+Path("data").mkdir(exist_ok=True)
 
 logging.basicConfig(
     level=logging.INFO,
