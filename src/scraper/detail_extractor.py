@@ -33,6 +33,11 @@ def extract_detail(browser: Browser, url: str) -> str:
 
     page: Page = browser.new_page()
     try:
+        from playwright_stealth import stealth_sync
+        stealth_sync(page)
+    except ImportError:
+        pass
+    try:
         logger.debug("Opening detail page: %s", url)
         page.goto(url, wait_until="networkidle", timeout=BROWSER_TIMEOUT_MS)
 

@@ -59,8 +59,23 @@ def run() -> None:
 
     try:
         with sync_playwright() as pw:
-            browser = pw.chromium.launch(headless=config.HEADLESS)
-            context = browser.new_context()
+            # Use a persistent context so Cloudflare cookies (cf_clearance)
+            # are saved between runs and the browser challenge only appears once.
+            Path(config.BROWSER_USER_DATA_DIR).mkdir(parents=True, exist_ok=True)
+            context = pw.chromium.launch_persistent_context(
+                user_data_dir=config.BROWSER_USER_DATA_DIR,
+                headless=config.HEADLESS,
+                args=["--disable-blink-features=AutomationControlled"],
+                ignore_default_args=["--enable-automation"],
+            )
+            # Apply stealth to hide Playwright automation signals
+            try:
+                from playwright_stealth import stealth_sync
+                stealth_sync(context.pages[0] if context.pages else context.new_page())
+            except ImportError:
+                logger.warning("playwright-stealth not installed – skipping stealth mode")
+
+            browser = context
             page    = context.new_page()
 
             # ── 1. Login ─────────────────────────────────────────────────────

@@ -28,5 +28,11 @@ DAILY_RUN_TIME = os.getenv("DAILY_RUN_TIME", "08:00")
 HDS_ADDRESS = "45 Francis Ave, Cambridge, MA 02138"
 
 # Browser
-HEADLESS = os.getenv("HEADLESS", "true").lower() == "true"
+# Default to headed (visible) mode – Cloudflare blocks headless browsers.
+# Set HEADLESS=true in .env only after confirming Cloudflare no longer challenges you.
+HEADLESS = os.getenv("HEADLESS", "false").lower() == "true"
 BROWSER_TIMEOUT_MS = int(os.getenv("BROWSER_TIMEOUT_MS", "30000"))
+
+# Persistent browser profile directory – stores cookies (incl. cf_clearance)
+# so Cloudflare doesn't re-challenge on every run.
+BROWSER_USER_DATA_DIR = os.getenv("BROWSER_USER_DATA_DIR", "data/browser_profile")
