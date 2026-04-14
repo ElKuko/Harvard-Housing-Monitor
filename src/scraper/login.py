@@ -45,7 +45,10 @@ def login(page: Page) -> None:
     # ── Step 2: Wait for password → enter → click Continue ──────────────────
     _enter_password(frame)
 
-    # ── Step 3: Verify listing page loaded ───────────────────────────────────
+    # ── Step 3: Click through "Contacted Properties" interstitial ────────────
+    _click_post_login_continue(page)
+
+    # ── Step 4: Verify listing page loaded ───────────────────────────────────
     _verify_listing_page(page)
 
     logger.info("Login successful")
@@ -170,6 +173,31 @@ def _enter_password(frame) -> None:
         frame.page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
     except Exception:
         pass  # some portals don't fully settle – proceed to verification
+
+
+def _click_post_login_continue(page: Page) -> None:
+    """
+    After login the portal shows a 'Contacted Properties' interstitial with a
+    Continue button (id='ManageFavoritesContinueApplicationButton0').
+    Click it if present, then wait for the listings page.
+    """
+    # Use the specific ID first, fall back to any green Continue link
+    candidates = [
+        "[id^='ManageFavoritesContinueApplicationButton']",
+        "a.btn-success:has-text('Continue')",
+        "a:has-text('Continue')",
+    ]
+    for sel in candidates:
+        try:
+            btn = page.locator(sel).first
+            if btn.count() > 0 and btn.is_visible(timeout=5000):
+                logger.debug("Clicking post-login Continue: %s", sel)
+                btn.click()
+                page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
+                return
+        except Exception:
+            continue
+    logger.debug("No post-login Continue button found – proceeding")
 
 
 def _verify_listing_page(page: Page) -> None:
