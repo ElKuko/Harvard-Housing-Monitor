@@ -178,25 +178,34 @@ def _enter_password(frame) -> None:
 def _click_post_login_continue(page: Page) -> None:
     """
     After login the portal shows a 'Contacted Properties' interstitial with a
-    Continue button (id='ManageFavoritesContinueApplicationButton0').
-    Click it if present, then wait for the listings page.
+    Continue button. Search all frames for it, click it, then wait for the
+    listings page to fully settle.
     """
-    # Use the specific ID first, fall back to any green Continue link
     candidates = [
         "[id^='ManageFavoritesContinueApplicationButton']",
         "a.btn-success:has-text('Continue')",
         "a:has-text('Continue')",
     ]
-    for sel in candidates:
-        try:
-            btn = page.locator(sel).first
-            if btn.count() > 0 and btn.is_visible(timeout=5000):
-                logger.debug("Clicking post-login Continue: %s", sel)
-                btn.click()
-                page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
-                return
-        except Exception:
-            continue
+
+    # Search main page and all frames
+    contexts = [page] + list(page.frames)
+    for ctx in contexts:
+        for sel in candidates:
+            try:
+                btn = ctx.locator(sel).first
+                if btn.count() > 0 and btn.is_visible(timeout=3000):
+                    logger.debug("Clicking post-login Continue in frame: %s | sel: %s", getattr(ctx, 'url', ''), sel)
+                    btn.click()
+                    # Wait for navigation and give the server time to settle
+                    # (the portal can return transient 500s during this transition)
+                    page.wait_for_timeout(4000)
+                    page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
+                    page.wait_for_timeout(2000)
+                    logger.debug("Post-login Continue clicked successfully")
+                    return
+            except Exception:
+                continue
+
     logger.debug("No post-login Continue button found – proceeding")
 
 

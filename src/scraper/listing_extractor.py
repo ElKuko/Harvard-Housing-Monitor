@@ -161,6 +161,9 @@ def _parse_row(tr, headers: list[str]) -> Optional[dict]:
 def _make_absolute_url(href: str) -> str:
     if not href:
         return ""
+    # Ignore javascript: pseudo-URLs — these are JS-triggered and not navigable
+    if href.lower().startswith("javascript:"):
+        return ""
     if href.startswith("http"):
         return href
     base = "https://huhousing-harvard.securecafe.com"
