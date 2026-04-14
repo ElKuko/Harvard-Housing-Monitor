@@ -37,7 +37,12 @@ def login(page: Page) -> None:
         logger.debug("playwright-stealth not installed – skipping")
 
     logger.info("Navigating to portal: %s", PORTAL_URL)
-    page.goto(PORTAL_URL, wait_until="networkidle", timeout=BROWSER_TIMEOUT_MS)
+    page.goto(PORTAL_URL, wait_until="domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
+    # Give JS a moment to render the form
+    page.wait_for_timeout(3000)
+
+    # Dismiss cookie consent popup if present
+    _dismiss_cookie_popup(page)
 
     # The form may live inside an iframe – find the right frame context
     frame = _find_form_frame(page)
@@ -57,6 +62,30 @@ def login(page: Page) -> None:
 # ---------------------------------------------------------------------------
 # Frame detection
 # ---------------------------------------------------------------------------
+
+def _dismiss_cookie_popup(page: Page) -> None:
+    """Click Accept/Reject on cookie consent banners if present."""
+    candidates = [
+        "button:has-text('Accept All')",
+        "button:has-text('Accept all')",
+        "button:has-text('Reject All')",
+        "button:has-text('Reject all')",
+        "button:has-text('Accept Cookies')",
+        "button[id*='accept' i]",
+        "button[class*='accept' i]",
+    ]
+    for sel in candidates:
+        try:
+            btn = page.locator(sel).first
+            if btn.count() > 0 and btn.is_visible(timeout=2000):
+                btn.click()
+                logger.debug("Dismissed cookie popup with: %s", sel)
+                page.wait_for_timeout(1000)
+                return
+        except Exception:
+            continue
+    logger.debug("No cookie popup found – continuing")
+
 
 def _find_form_frame(page: Page) -> Frame:
     """
@@ -146,7 +175,7 @@ def _enter_password(frame) -> None:
 
     # Wait for navigation / network idle
     try:
-        frame.page.wait_for_load_state("networkidle", timeout=BROWSER_TIMEOUT_MS)
+        frame.page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
     except Exception:
         pass  # some portals don't fully settle – proceed to verification
 

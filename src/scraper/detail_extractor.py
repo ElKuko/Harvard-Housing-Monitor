@@ -39,7 +39,7 @@ def extract_detail(browser: Browser, url: str) -> str:
         pass
     try:
         logger.debug("Opening detail page: %s", url)
-        page.goto(url, wait_until="networkidle", timeout=BROWSER_TIMEOUT_MS)
+        page.goto(url, wait_until="domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
 
         # Try structured content areas first
         for selector in SEL_CONTENT.split(", "):

@@ -190,7 +190,7 @@ def _go_to_next_page(page: Page) -> bool:
 
     try:
         next_btn.click()
-        page.wait_for_load_state("networkidle", timeout=BROWSER_TIMEOUT_MS)
+        page.wait_for_load_state("domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
         return True
     except Exception as exc:
         logger.debug("Pagination click failed: %s", exc)
