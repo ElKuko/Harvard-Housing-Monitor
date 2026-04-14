@@ -28,14 +28,6 @@ def login(page: Page) -> None:
     Perform the full login and land on the listing page.
     Raises RuntimeError on any failure.
     """
-    # Apply stealth before navigating
-    try:
-        from playwright_stealth import stealth_sync
-        stealth_sync(page)
-        logger.debug("Stealth mode applied")
-    except ImportError:
-        logger.debug("playwright-stealth not installed – skipping")
-
     logger.info("Navigating to portal: %s", PORTAL_URL)
     page.goto(PORTAL_URL, wait_until="domcontentloaded", timeout=BROWSER_TIMEOUT_MS)
     # Give JS a moment to render the form

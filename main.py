@@ -10,9 +10,9 @@ import logging
 import sys
 import uuid
 from datetime import date, datetime
-
 from pathlib import Path
-from playwright.sync_api import sync_playwright
+
+from camoufox.sync_api import Camoufox
 
 import config
 from src.database import db
@@ -58,25 +58,10 @@ def run() -> None:
     run_errors: list[str]   = []
 
     try:
-        with sync_playwright() as pw:
-            # Use a persistent context so Cloudflare cookies (cf_clearance)
-            # are saved between runs and the browser challenge only appears once.
-            Path(config.BROWSER_USER_DATA_DIR).mkdir(parents=True, exist_ok=True)
-            context = pw.chromium.launch_persistent_context(
-                user_data_dir=config.BROWSER_USER_DATA_DIR,
-                headless=config.HEADLESS,
-                args=["--disable-blink-features=AutomationControlled"],
-                ignore_default_args=["--enable-automation"],
-            )
-            # Apply stealth to hide Playwright automation signals
-            try:
-                from playwright_stealth import stealth_sync
-                stealth_sync(context.pages[0] if context.pages else context.new_page())
-            except ImportError:
-                logger.warning("playwright-stealth not installed – skipping stealth mode")
-
-            browser = context
-            page    = context.new_page()
+        # Camoufox is a patched Firefox that bypasses Cloudflare bot detection.
+        # headless=False keeps the browser visible so Cloudflare trusts it.
+        with Camoufox(headless=config.HEADLESS, geoip=True) as browser:
+            page = browser.new_page()
 
             # ── 1. Login ─────────────────────────────────────────────────────
             try:
@@ -111,8 +96,6 @@ def run() -> None:
                     except Exception as exc:
                         logger.warning("Detail extraction failed for %s: %s", unit["unique_id"], exc)
                         run_errors.append(f"detail:{unit['unique_id']}:{exc}")
-
-            browser.close()
 
     except Exception as exc:
         logger.exception("Unexpected browser error")
